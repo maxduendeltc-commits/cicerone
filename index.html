@@ -48,14 +48,14 @@
         h1 { font-size: 1.25rem; margin: 0; color: var(--primary); }
         .btn-small { background: none; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
 
-        .mode-select { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .mode-select { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
         .btn-main { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; text-align: center; }
         .btn-main:hover { background: var(--primary-hover); }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center; }
-        .stat-card { background: var(--bg-color); padding: 10px; border-radius: 8px; }
-        .stat-val { font-size: 1.25rem; font-weight: bold; }
-        .stat-lbl { font-size: 0.75rem; color: #64748b; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; text-align: center; }
+        .stat-card { background: var(--bg-color); padding: 10px 4px; border-radius: 8px; }
+        .stat-val { font-size: 1.1rem; font-weight: bold; }
+        .stat-lbl { font-size: 0.7rem; color: #64748b; }
 
         .history-section { border-top: 2px solid var(--border); padding-top: 16px; }
         .history-title { font-size: 1rem; font-weight: bold; margin-bottom: 10px; color: var(--text-color); display: flex; justify-content: space-between; align-items: center; }
@@ -88,18 +88,19 @@
         <button id="home-btn" class="btn-small hidden" onclick="showDashboard()">Dashboard</button>
     </header>
 
-    <!-- DASHBOARD VIEW -->
     <div id="dashboard-view">
         <div class="stats-grid">
-            <div class="stat-card"><div id="stat-total" class="stat-val">0</div><div class="stat-lbl">Questions Seen</div></div>
+            <div class="stat-card"><div id="stat-total" class="stat-val">0</div><div class="stat-lbl">Seen</div></div>
             <div class="stat-card"><div id="stat-accuracy" class="stat-val">0%</div><div class="stat-lbl">Accuracy</div></div>
-            <div class="stat-card"><div id="stat-bookmarks" class="stat-val">0</div><div class="stat-lbl">Bookmarked</div></div>
+            <div class="stat-card"><div id="stat-bookmarks" class="stat-val">0</div><div class="stat-lbl">Saved</div></div>
+            <div class="stat-card"><div id="stat-weakness" class="stat-val" style="color:#dc2626;">0</div><div class="stat-lbl">Missed</div></div>
         </div>
 
         <div class="mode-select">
             <button class="btn-main" onclick="startQuiz(25)">25-Question Sprint</button>
             <button class="btn-main" onclick="startQuiz(50)">50-Question Practice Exam</button>
-            <button class="btn-main" style="background:#475569;" onclick="startQuiz('bookmarks')">Review Bookmarked Questions</button>
+            <button id="weak-btn" class="btn-main" style="background:#dc2626;" onclick="startQuiz('weak')">Focus on Weak Areas (0)</button>
+            <button class="btn-main" style="background:#475569;" onclick="startQuiz('bookmarks')">Review Saved Questions</button>
         </div>
 
         <div class="history-section">
@@ -113,7 +114,6 @@
         </div>
     </div>
 
-    <!-- QUIZ VIEW -->
     <div id="quiz-view" class="hidden">
         <div class="q-header">
             <span id="q-progress" class="q-meta">Question 1/25</span>
@@ -132,7 +132,7 @@
 </div>
 
 <script>
-// Expanded Bank of 100 Unique Cicerone CBS Questions
+// Bank of 100 Unique Cicerone CBS Questions
 const questionBank = [
     { id: 1, q: "At what temperature should a standard direct-draw draft system be maintained?", opts: ["32°F (0°C)", "38°F (3°C)", "45°F (7°C)", "50°F (10°C)"], ans: 1, exp: "38°F is the standard operating temperature for draft systems to maintain equilibrium pressure and prevent foaming." },
     { id: 2, q: "How long should a cold keg sit in a walk-in cooler before being tapped to ensure it reaches proper temperature?", opts: ["2 hours", "6 hours", "12 hours", "24 hours"], ans: 3, exp: "Kegs require 24 hours in a walk-in cooler to stabilize at proper service temperature (38°F)." },
@@ -197,197 +197,4 @@ const questionBank = [
     { id: 61, q: "What is the function of a draft jumper hose inside a walk-in cooler?", opts: ["Connects the keg coupler to the wall-mounted draft line conduit", "Cools the draft tower", "Injects extra CO2 into beer", "Filters out yeast"], ans: 0, exp: "Jumper lines are flexible tubing connecting the keg coupler outlet to the stationary trunk line." },
     { id: 62, q: "Which British ale style is known for very low carbonation, served via hand pump at cellar temperature (50-55°F)?", opts: ["Real Ale / Cask Conditioned Ale", "English Barleywine", "Foreign Extra Stout", "Northern English Brown"], ans: 0, exp: "Cask conditioned Real Ale ferments in its serving vessel and is dispensed at cellar temperature without added gas." },
     { id: 63, q: "What chemical compound causes butterscotch aromas in under-fermented or rushed lagers?", opts: ["Diacetyl", "Acetaldehyde", "Lactic Acid", "Isovaleric Acid"], ans: 0, exp: "Diacetyl is a natural fermentation byproduct that yeast reabsorbs during a proper rest period." },
-    { id: 64, q: "Which pale German lager style was created specifically to compete with Czech Pilsner in the 1890s?", opts: ["Munich Helles", "Märzen", "Doppelbock", "Maibock"], ans: 0, exp: "Munich Helles was developed in Munich to offer a malt-forward alternative to Bohemian Pilsner." },
-    { id: 65, q: "Why must beer glasses be allowed to air dry completely on open wire rack shelves?", opts: ["Air drying allows complete sanitizer evaporation and avoids towel lint", "It cools the glass faster", "It prevents glass breakage", "It prevents water spots on outside walls"], ans: 0, exp: "Air drying ensures chemical sanitizers flash off completely without introducing towel contamination." },
-    { id: 66, q: "Which style features heavy banana, bubblegum, and clove aromatics with at least 50% malted wheat?", opts: ["German Hefeweizen", "American Wheat Beer", "Witbier", "Berliner Weisse"], ans: 0, exp: "German Hefeweizen requires at least 50% wheat malt and produces strong banana esters and clove phenols." },
-    { id: 67, q: "What does IBU stand for in beer terminology?", opts: ["International Bitterness Units", "Internal Boiling Unit", "International Beverage Union", "Ideal Fermentation Utility"], ans: 0, exp: "IBU measures the concentration of isomerized alpha acids (bitterness) in beer." },
-    { id: 68, q: "What happens to draft beer if the applied gas pressure is kept higher than the balance pressure over several days?", opts: ["Beer becomes over-carbonated and pours foamy", "Beer turns flat", "Draft line freezes", "Keg coupler seals break"], ans: 0, exp: "Excess pressure forces extra CO2 gas into the beer over time, causing high carbonation and runaway foam." },
-    { id: 69, q: "Which English ale style exhibits low alcohol (3.0% - 3.8% ABV) with mild caramel and copper color?", opts: ["Ordinary Bitter", "English IPA", "Strong Ale", "Wee Heavy"], ans: 0, exp: "Ordinary Bitter is a low-gravity session ale emphasizing sessionability, crisp hop balance, and light caramel." },
-    { id: 70, q: "What is the primary contribution of roasted unmalted barley in Irish Stout?", opts: ["Deep dark color, dry coffee-like roastiness, and white foam stability", "Sweet caramel flavor", "High alcohol content", "Fruity esters"], ans: 0, exp: "Unmalted roasted barley gives Irish Stout its signature espresso dryness, dark color, and dense foam head." },
-    { id: 71, q: "Which component in a direct-draw draft kegerator holds the faucet and connects to the shank?", opts: ["Draft Tower", "FOB", "Secondary Regulator", "Gas Manifold"], ans: 0, exp: "The draft tower sits on top of the counter/kegerator housing the shank and faucet assemblies." },
-    { id: 72, q: "What off-flavor resembles vinegar and indicates acetic acid bacterial contamination?", opts: ["Acetic Acid / Bacterial Infection", "Diacetyl", "Oxidation", "DMS"], ans: 0, exp: "Acetobacter bacteria convert alcohol into acetic acid (vinegar), signaling improper sanitation." },
-    { id: 73, q: "What glass shape is characterized by a tall, narrow body with a wide opening to accentuate wheat beer foam?", opts: ["Weizen Glass", "Snifter", "Pint Glass", "Flute"], ans: 0, exp: "The curved Weizen glass holds a full half-liter while trapping thick wheat beer heads." },
-    { id: 74, q: "What temperature water should be used for the middle rinse sink in a 3-sink washing station?", opts: ["Cool / Cold water", "Boiling hot water", "Soapy warm water", "Freezing ice water"], ans: 0, exp: "The middle rinse sink utilizes cool, clean running water to remove detergent before sanitizing." },
-    { id: 75, q: "Which strong German lager style was historically brewed by monks as 'liquid bread' for fasts?", opts: ["Doppelbock", "Schwarzbier", "Kölsch", "Helles"], ans: 0, exp: "Doppelbock ('double bock') was brewed by Paulaner monks to sustain themselves during Lenten fasts." },
-    { id: 76, q: "What is the primary function of a high-pressure primary gas regulator attached to a CO2 tank?", opts: ["Reduces cylinder pressure down to a usable distribution pressure (10-15 PSI)", "Chills the gas line", "Blends CO2 with nitrogen", "Prevents beer from flowing backward"], ans: 0, exp: "Primary regulators lower tank pressure (often ~800+ PSI) down to low working pressure for serving." },
-    { id: 77, q: "Which style is a sweet, dark Scottish ale with rich caramel, kettle-boiled sweetness, and low hop bitterness?", opts: ["Wee Heavy / Scotch Ale", "Irish Red Ale", "English Porter", "Mild Ale"], ans: 0, exp: "Wee Heavy (Scotch Ale) is malt-forward, rich, and caramel-heavy with minimal hop character." },
-    { id: 78, q: "What primary flavor profile distinguishes American hops from Noble European hops?", opts: ["Citrus, pine, resin, and tropical fruit", "Subtle herbal and spicy floral notes", "Earthy, woody, and herbal tea notes", "Sweet honey and biscuit"], ans: 0, exp: "American cultivars are renowned for expressive citrus (grapefruit), resinous pine, and tropical notes." },
-    { id: 79, q: "What cause usually explains why a newly tapped keg pours completely flat beer with no head retention?", opts: ["Applied gas pressure is too low or temperature is too cold", "Draft lines are too warm", "Faucet is submerged", "Glass is too clean"], ans: 0, exp: "Insufficient pressure or sub-freezing temperatures prevent CO2 from releasing from solution to build foam." },
-    { id: 80, q: "Which style is a pale, bittersweet French-Belgian farmhouse ale with high carbonation and fruity/spicy complexity?", opts: ["Saison", "Belgian Tripel", "Dubbel", "Flanders Red"], ans: 0, exp: "Saison is a traditional Belgian farmhouse ale known for fruity esters, peppery phenols, high carbonation, and a dry finish." },
-    { id: 81, q: "What off-flavor produces a distinct buttery, oily, or butterscotch aroma?", opts: ["Diacetyl", "DMS", "Acetaldehyde", "Lightstruck"], ans: 0, exp: "Diacetyl is vicinal diketone that imparts butterscotch or movie theater butter flavors." },
-    { id: 82, q: "Why must draft lines be flushed with clean water after circulating caustic cleaner?", opts: ["To remove all traces of chemical cleaner before beer is reintroduced", "To cool the lines down", "To add carbonation", "To check line pressure"], ans: 0, exp: "Thorough freshwater rinsing removes caustic chemical residue, protecting guests and beer flavor integrity." },
-    { id: 83, q: "Which Belgian style is famous for a sour, cherry-like ester profile, oak-aging, and a deep reddish-brown color?", opts: ["Flanders Red Ale", "Dubbel", "Witbier", "Gose"], ans: 0, exp: "Flanders Red Ale undergoes extended aging in wooden foeders, developing acetic/lactic tartness and plum/cherry notes." },
-    { id: 84, q: "What component connects the shank to the vinyl draft tubing inside a draft tower?", opts: ["Tailpiece with Hex Nut and Washer", "Coupler probe", "FOB sensor", "Regulator diaphragm"], ans: 0, exp: "A tailpiece, hex nut, and rubber washer create the tight seal between vinyl tubing and the threaded shank." },
-    { id: 85, q: "What is the primary grain used in traditional English Sweet Stouts (Milk Stouts) to add unfermentable body?", opts: ["Lactose (Milk Sugar)", "Flaked Oats", "Wheat Malt", "Corn Sugar"], ans: 0, exp: "Lactose sugar cannot be fermented by standard brewer's yeast, leaving residual sweetness and mouthfeel." },
-    { id: 86, q: "Which hop variety is iconic to traditional English Bitters and Pale Ales?", opts: ["East Kent Goldings / Fuggles", "Cascade / Citra", "Saaz / Hallertau", "Nelson Sauvin"], ans: 0, exp: "East Kent Goldings and Fuggles provide classic earthy, floral, and herbal English hop profiles." },
-    { id: 87, q: "What is the ideal angle to hold a glass when beginning a draft pour?", opts: ["45-degree angle", "90-degree straight vertical", "15-degree nearly flat", "Upside down over spout"], ans: 0, exp: "Holding the glass at 45 degrees allows smooth laminar flow along the glass wall without creating excess foam early on." },
-    { id: 88, q: "At what point in the draft pour should you straighten the glass upright?", opts: ["When the glass is about half to two-thirds full", "Immediately upon opening faucet", "When the glass is 90% full", "Never, keep it tilted"], ans: 0, exp: "Straightening the glass halfway through builds a proper 1 to 1.5-inch collar of dense foam head." },
-    { id: 89, q: "Which dark German lager style emphasizes deep, rich maltiness without harsh burnt roasted notes?", opts: ["Munich Dunkel", "Schwarzbier", "German Pils", "Kölsch"], ans: 0, exp: "Munich Dunkel utilizes Munich malts to offer rich bread-crust flavor without harsh roasted bitterness." },
-    { id: 90, q: "What compound in sanitizer can ruin beer head retention if allowed to pool in the bottom of a glass?", opts: ["Surfactants / Residual Sanitizer", "Water minerals", "Pure alcohol", "CO2 gas"], ans: 0, exp: "Excess liquid sanitizer sitting in a glass breaks surface tension, destroying foam stability." },
-    { id: 91, q: "Which style is a high-ABV British ale with deep copper color, rich maltiness, and noticeable warming alcohol?", opts: ["English Barleywine", "Ordinary Bitter", "Dark Mild", "English Porter"], ans: 0, exp: "English Barleywine features rich malt complexity, dark fruit esters, moderate bitterness, and notable alcohol warmth." },
-    { id: 92, q: "What type of faucet features an internal lever that can be pushed backward to create a dense foam head?", opts: ["Nitrogen / Stout Faucet", "Standard Forward-Sealing Faucet", "Picnic Pump Faucet", "Venturi Faucet"], ans: 0, exp: "Stout faucets force gas-charged beer through a restrictor plate and feature a push-back foam mechanism." },
-    { id: 93, q: "What flavor impact does Brettanomyces yeast add when intentional in sour ale production?", opts: ["Earthy, pineapple, leather, and barnyard funk", "Clean white bread", "Pure buttery diacetyl", "Heavy citrus hop oils"], ans: 0, exp: "Brettanomyces produces complex aromatic esters and phenolics ranging from tropical fruit to leather and barnyard." },
-    { id: 94, q: "Which style is a sessionable, lower-alcohol (3.8%-4.6%) pale German lager with smooth maltiness and moderate bitterness?", opts: ["German Pils / Munich Helles", "Doppelbock", "Maibock", "Schwarzbier"], ans: 0, exp: "Munich Helles and German Pils serve as approachable, sessionable everyday lagers in Germany." },
-    { id: 95, q: "What is the primary purpose of a secondary line cleaning acid recirculation pump?", opts: ["To mechanically scour line walls using fluid velocity alongside chemical action", "To heat the water", "To inject extra CO2", "To cool the lines"], ans: 0, exp: "Dynamic recirculation pumps push chemical cleaning solutions at high velocity to scrub line walls clean." },
-    { id: 96, q: "Which German ale style is dark, wheat-based, and combines banana/clove esters with dark roast maltiness?", opts: ["Dunkles Weissbier / Dunkelweizen", "Hefeweizen", "Weizenbock", "Berliner Weisse"], ans: 0, exp: "Dunkelweizen blends German wheat yeast ester profiles with rich toasted dark wheat and barley malts." },
-    { id: 97, q: "What causes a beer line to produce 'beer stone' scale more rapidly?", opts: ["Hard water minerals and calcium in beer reacting over time", "Cold glycol temperature", "High nitrogen blend ratio", "Clean glassware"], ans: 0, exp: "Calcium and oxalates in brewing water/malt naturally precipitate out inside stainless and vinyl hardware." },
-    { id: 98, q: "Which classic style originates from Newcastle, offering a nut-brown color and soft caramel/toffee profile?", opts: ["Northern English Brown Ale", "Sweet Stout", "Barleywine", "Irish Red Ale"], ans: 0, exp: "Northern English Brown Ales present a nutty, sweet malt balance with minimal hop bitterness." },
-    { id: 99, q: "What is the consequence of serving beer through dirty, uncleaned draft faucets?", opts: ["Bacterial contamination leading to sour, hazy, and off-flavored beer", "Increased alcohol percentage", "Clearer beer presentation", "Higher carbonation levels"], ans: 0, exp: "Wild bacteria (Lactobacillus/Pediococcus) thrive in uncleaned faucets, causing off-flavors, cloudiness, and sourness." },
-    { id: 100, q: "What key indicator shows a server that a draft line cleaning was effective?", opts: ["Clear, debris-free water flush and clear line view with no film or mineral buildup", "Dark brown rinse water", "Foam in the drain pan", "Lower gas regulator readings"], ans: 0, exp: "Clean lines show zero scale, clear rinse flushes, and fresh-tasting beer free of off-flavors or infection hazes." }
-];
-
-// App State
-let activePool = [];
-let currentIndex = 0;
-let sessionCorrect = 0;
-let userStats = JSON.parse(localStorage.getItem('cicerone_stats')) || { total: 0, correct: 0, bookmarks: [], history: [] };
-
-if (!userStats.history) userStats.history = [];
-
-function saveStats() {
-    localStorage.setItem('cicerone_stats', JSON.stringify(userStats));
-    updateDashboardUI();
-}
-
-function updateDashboardUI() {
-    document.getElementById('stat-total').innerText = userStats.total;
-    const acc = userStats.total > 0 ? Math.round((userStats.correct / userStats.total) * 100) : 0;
-    document.getElementById('stat-accuracy').innerText = acc + '%';
-    document.getElementById('stat-bookmarks').innerText = userStats.bookmarks.length;
-
-    // Render History Log
-    const histContainer = document.getElementById('history-list');
-    if (userStats.history.length === 0) {
-        histContainer.innerHTML = `<div style="font-size:0.85rem; color:#94a3b8; text-align:center; padding:10px;">No exams completed yet.</div>`;
-    } else {
-        histContainer.innerHTML = userStats.history.slice().reverse().map(item => `
-            <div class="history-item">
-                <div>
-                    <span class="history-tag">${item.type}</span>
-                    <span style="color:#64748b; margin-left:6px;">${item.date}</span>
-                </div>
-                <div><strong>${item.score}/${item.max}</strong> (${item.pct}%)</div>
-            </div>
-        `).join('');
-    }
-}
-
-function clearHistory() {
-    if (confirm("Clear all past exam history logs?")) {
-        userStats.history = [];
-        saveStats();
-    }
-}
-
-function showDashboard() {
-    document.getElementById('dashboard-view').classList.remove('hidden');
-    document.getElementById('quiz-view').classList.add('hidden');
-    document.getElementById('home-btn').classList.add('hidden');
-    updateDashboardUI();
-}
-
-function startQuiz(count) {
-    if (count === 'bookmarks') {
-        activePool = questionBank.filter(q => userStats.bookmarks.includes(q.id));
-        if (activePool.length === 0) {
-            alert('No bookmarked questions available!');
-            return;
-        }
-    } else {
-        activePool = [...questionBank].sort(() => 0.5 - Math.random()).slice(0, count);
-    }
-
-    currentIndex = 0;
-    sessionCorrect = 0;
-    document.getElementById('dashboard-view').classList.add('hidden');
-    document.getElementById('quiz-view').classList.remove('hidden');
-    document.getElementById('home-btn').classList.remove('hidden');
-    loadQuestion();
-}
-
-function loadQuestion() {
-    const q = activePool[currentIndex];
-    document.getElementById('q-progress').innerText = `Question ${currentIndex + 1}/${activePool.length}`;
-    document.getElementById('q-text').innerText = q.q;
-    
-    const isBookmarked = userStats.bookmarks.includes(q.id);
-    const bmBtn = document.getElementById('bookmark-toggle');
-    bmBtn.classList.toggle('active', isBookmarked);
-
-    const container = document.getElementById('options-container');
-    container.innerHTML = '';
-    q.opts.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'opt-btn';
-        btn.innerText = opt;
-        btn.onclick = () => handleAnswer(idx);
-        container.appendChild(btn);
-    });
-
-    document.getElementById('feedback-box').classList.add('hidden');
-    document.getElementById('next-btn').classList.add('hidden');
-}
-
-function handleAnswer(selectedIdx) {
-    const q = activePool[currentIndex];
-    const buttons = document.querySelectorAll('.opt-btn');
-    
-    buttons.forEach((btn, idx) => {
-        btn.disabled = true;
-        if (idx === q.ans) btn.classList.add('correct');
-        if (idx === selectedIdx && selectedIdx !== q.ans) btn.classList.add('incorrect');
-    });
-
-    userStats.total++;
-    if (selectedIdx === q.ans) {
-        userStats.correct++;
-        sessionCorrect++;
-    }
-    saveStats();
-
-    document.getElementById('feedback-text').innerText = q.exp;
-    document.getElementById('feedback-box').classList.remove('hidden');
-    document.getElementById('next-btn').classList.remove('hidden');
-}
-
-function toggleBookmark() {
-    const q = activePool[currentIndex];
-    const idx = userStats.bookmarks.indexOf(q.id);
-    if (idx > -1) {
-        userStats.bookmarks.splice(idx, 1);
-    } else {
-        userStats.bookmarks.push(q.id);
-    }
-    saveStats();
-    document.getElementById('bookmark-toggle').classList.toggle('active', idx === -1);
-}
-
-function nextQuestion() {
-    currentIndex++;
-    if (currentIndex < activePool.length) {
-        loadQuestion();
-    } else {
-        // Log Exam History
-        const pct = Math.round((sessionCorrect / activePool.length) * 100);
-        const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const typeStr = activePool.length === 25 ? '25-Sprint' : activePool.length === 50 ? '50-Exam' : 'Review';
-        
-        userStats.history.push({
-            date: dateStr,
-            type: typeStr,
-            score: sessionCorrect,
-            max: activePool.length,
-            pct: pct
-        });
-        
-        saveStats();
-        alert(`Quiz Complete!\nScore: ${sessionCorrect}/${activePool.length} (${pct}%)`);
-        showDashboard();
-    }
-}
-
-// Initial Setup
-updateDashboardUI();
-</script>
-</body>
-</html>
+    { id: 64, q: "Which pale German lager style was created specifically to compete with Czech Pilsner in the 1890s?", opts: ["Munich Helles", "Märzen", "Doppelbock", "Maibock"], ans: 0, exp: "Munich
