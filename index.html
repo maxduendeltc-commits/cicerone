@@ -65,6 +65,16 @@
 
         .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .q-meta { font-size: 0.85rem; color: #64748b; font-weight: bold; }
+        .timer-badge { background: #e2e8f0; padding: 4px 8px; border-radius: 6px; font-family: monospace; font-size: 0.95rem; font-weight: bold; }
+        .timer-badge.warn { background: #fef3c7; color: #b45309; }
+        .timer-badge.danger { background: #fee2e2; color: #dc2626; animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
         .bookmark-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #cbd5e1; }
         .bookmark-btn.active { color: #f59e0b; }
 
@@ -77,6 +87,8 @@
 
         .feedback { background: #f8fafc; border-left: 4px solid var(--primary); padding: 12px; border-radius: 4px; margin-bottom: 16px; font-size: 0.9rem; line-height: 1.4; }
 
+        .auto-indicator { font-size: 0.8rem; color: #16a34a; font-weight: bold; margin-top: 6px; display: block; }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -88,6 +100,7 @@
         <button id="home-btn" class="btn-small hidden" onclick="showDashboard()">Dashboard</button>
     </header>
 
+    <!-- DASHBOARD VIEW -->
     <div id="dashboard-view">
         <div class="stats-grid">
             <div class="stat-card"><div id="stat-total" class="stat-val">0</div><div class="stat-lbl">Seen</div></div>
@@ -98,7 +111,7 @@
 
         <div class="mode-select">
             <button class="btn-main" onclick="startQuiz(25)">25-Question Sprint</button>
-            <button class="btn-main" onclick="startQuiz(50)">50-Question Practice Exam</button>
+            <button class="btn-main" style="background:#0284c7;" onclick="startQuiz(60, true)">⏱️ Timed Official Exam (60 Qs / 30 Min)</button>
             <button id="weak-btn" class="btn-main" style="background:#dc2626;" onclick="startQuiz('weak')">Focus on Weak Areas (0)</button>
             <button class="btn-main" style="background:#475569;" onclick="startQuiz('bookmarks')">Review Saved Questions</button>
         </div>
@@ -114,9 +127,13 @@
         </div>
     </div>
 
+    <!-- QUIZ VIEW -->
     <div id="quiz-view" class="hidden">
         <div class="q-header">
-            <span id="q-progress" class="q-meta">Question 1/25</span>
+            <div>
+                <span id="q-progress" class="q-meta">Question 1/60</span>
+                <span id="timer-display" class="timer-badge hidden">30:00</span>
+            </div>
             <button id="bookmark-toggle" class="bookmark-btn" onclick="toggleBookmark()">★</button>
         </div>
 
@@ -125,6 +142,7 @@
 
         <div id="feedback-box" class="feedback hidden">
             <strong>Explanation:</strong> <span id="feedback-text"></span>
+            <span id="auto-advance-msg" class="auto-indicator hidden">✓ Correct! Advancing...</span>
         </div>
 
         <button id="next-btn" class="btn-main hidden" style="width:100%;" onclick="nextQuestion()">Next Question</button>
@@ -235,10 +253,13 @@ const questionBank = [
     { id: 100, q: "What key indicator shows a server that a draft line cleaning was effective?", opts: ["Clear, debris-free water flush and clear line view with no film or mineral buildup", "Dark brown rinse water", "Foam in the drain pan", "Lower gas regulator readings"], ans: 0, exp: "Clean lines show zero scale, clear rinse flushes, and fresh-tasting beer free of off-flavors or infection hazes." }
 ];
 
-// App State Initialization
+// App State
 let activePool = [];
 let currentIndex = 0;
 let sessionCorrect = 0;
+let examTimer = null;
+let timeRemaining = 1800; // 30 minutes in seconds
+let autoAdvanceTimer = null;
 
 let userStats = { total: 0, correct: 0, bookmarks: [], weak: [], history: [] };
 
@@ -299,14 +320,65 @@ function clearHistory() {
     }
 }
 
+function stopTimer() {
+    if (examTimer) {
+        clearInterval(examTimer);
+        examTimer = null;
+    }
+}
+
+function clearAutoAdvance() {
+    if (autoAdvanceTimer) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+    }
+}
+
+function startTimer() {
+    stopTimer();
+    timeRemaining = 1800; // 30 minutes
+    const timerEl = document.getElementById('timer-display');
+    timerEl.classList.remove('hidden', 'warn', 'danger');
+
+    updateTimerDisplay();
+
+    examTimer = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay();
+
+        if (timeRemaining <= 300 && timeRemaining > 60) {
+            timerEl.classList.add('warn');
+        } else if (timeRemaining <= 60) {
+            timerEl.classList.remove('warn');
+            timerEl.classList.add('danger');
+        }
+
+        if (timeRemaining <= 0) {
+            stopTimer();
+            alert("⏰ Time is up! Submitting your exam now.");
+            finishExam(true);
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const mins = Math.floor(timeRemaining / 60);
+    const secs = timeRemaining % 60;
+    const formatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    document.getElementById('timer-display').innerText = formatted;
+}
+
 function showDashboard() {
+    stopTimer();
+    clearAutoAdvance();
+    document.getElementById('timer-display').classList.add('hidden');
     document.getElementById('dashboard-view').classList.remove('hidden');
     document.getElementById('quiz-view').classList.add('hidden');
     document.getElementById('home-btn').classList.add('hidden');
     updateDashboardUI();
 }
 
-function startQuiz(count) {
+function startQuiz(count, isTimed = false) {
     if (count === 'bookmarks') {
         activePool = questionBank.filter(q => userStats.bookmarks.includes(q.id));
         if (activePool.length === 0) {
@@ -328,10 +400,19 @@ function startQuiz(count) {
     document.getElementById('dashboard-view').classList.add('hidden');
     document.getElementById('quiz-view').classList.remove('hidden');
     document.getElementById('home-btn').classList.remove('hidden');
+
+    if (isTimed) {
+        startTimer();
+    } else {
+        stopTimer();
+        document.getElementById('timer-display').classList.add('hidden');
+    }
+
     loadQuestion();
 }
 
 function loadQuestion() {
+    clearAutoAdvance();
     const q = activePool[currentIndex];
     document.getElementById('q-progress').innerText = `Question ${currentIndex + 1}/${activePool.length}`;
     document.getElementById('q-text').innerText = q.q;
@@ -351,10 +432,12 @@ function loadQuestion() {
     });
 
     document.getElementById('feedback-box').classList.add('hidden');
+    document.getElementById('auto-advance-msg').classList.add('hidden');
     document.getElementById('next-btn').classList.add('hidden');
 }
 
 function handleAnswer(selectedIdx) {
+    clearAutoAdvance();
     const q = activePool[currentIndex];
     const buttons = document.querySelectorAll('.opt-btn');
     
@@ -366,7 +449,9 @@ function handleAnswer(selectedIdx) {
 
     userStats.total++;
     
-    if (selectedIdx === q.ans) {
+    const isCorrect = (selectedIdx === q.ans);
+
+    if (isCorrect) {
         userStats.correct++;
         sessionCorrect++;
         const wIdx = userStats.weak.indexOf(q.id);
@@ -380,7 +465,19 @@ function handleAnswer(selectedIdx) {
 
     document.getElementById('feedback-text').innerText = q.exp;
     document.getElementById('feedback-box').classList.remove('hidden');
-    document.getElementById('next-btn').classList.remove('hidden');
+
+    if (isCorrect) {
+        document.getElementById('auto-advance-msg').classList.remove('hidden');
+        document.getElementById('next-btn').classList.add('hidden');
+        
+        // Auto-advance after 1.5 seconds on correct answer
+        autoAdvanceTimer = setTimeout(() => {
+            nextQuestion();
+        }, 1500);
+    } else {
+        document.getElementById('auto-advance-msg').classList.add('hidden');
+        document.getElementById('next-btn').classList.remove('hidden');
+    }
 }
 
 function toggleBookmark() {
@@ -396,28 +493,41 @@ function toggleBookmark() {
 }
 
 function nextQuestion() {
+    clearAutoAdvance();
     currentIndex++;
     if (currentIndex < activePool.length) {
         loadQuestion();
     } else {
-        const pct = Math.round((sessionCorrect / activePool.length) * 100);
-        const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        let typeStr = '25-Sprint';
-        if (activePool.length === 50) typeStr = '50-Exam';
-        if (activePool.length !== 25 && activePool.length !== 50) typeStr = 'Focus Run';
-        
-        userStats.history.push({
-            date: dateStr,
-            type: typeStr,
-            score: sessionCorrect,
-            max: activePool.length,
-            pct: pct
-        });
-        
-        saveStats();
-        alert(`Quiz Complete!\nScore: ${sessionCorrect}/${activePool.length} (${pct}%)`);
-        showDashboard();
+        finishExam(false);
     }
+}
+
+function finishExam(isTimeout) {
+    stopTimer();
+    clearAutoAdvance();
+    const pct = Math.round((sessionCorrect / activePool.length) * 100);
+    const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    
+    let typeStr = '25-Sprint';
+    if (activePool.length === 60) typeStr = '60-Official';
+    if (activePool.length !== 25 && activePool.length !== 60) typeStr = 'Focus Run';
+
+    userStats.history.push({
+        date: dateStr,
+        type: typeStr,
+        score: sessionCorrect,
+        max: activePool.length,
+        pct: pct
+    });
+    
+    saveStats();
+    
+    const msg = isTimeout 
+        ? `Time Expired!\nFinal Score: ${sessionCorrect}/${activePool.length} (${pct}%)`
+        : `Quiz Complete!\nFinal Score: ${sessionCorrect}/${activePool.length} (${pct}%)`;
+
+    alert(msg);
+    showDashboard();
 }
 
 // Initial UI Setup
