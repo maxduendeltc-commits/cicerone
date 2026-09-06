@@ -62,6 +62,7 @@
         .history-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
         .history-item { background: var(--bg-color); padding: 10px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
         .history-tag { font-weight: bold; color: var(--primary); }
+        .history-time { font-size: 0.75rem; color: #64748b; margin-left: 6px; font-family: monospace; }
 
         .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .q-meta { font-size: 0.85rem; color: #64748b; font-weight: bold; }
@@ -86,7 +87,6 @@
         .opt-btn.incorrect { background: #fee2e2; border-color: var(--incorrect); color: #7f1d1d; }
 
         .feedback { background: #f8fafc; border-left: 4px solid var(--primary); padding: 12px; border-radius: 4px; margin-bottom: 16px; font-size: 0.9rem; line-height: 1.4; }
-
         .auto-indicator { font-size: 0.8rem; color: #16a34a; font-weight: bold; margin-top: 6px; display: block; }
 
         .hidden { display: none !important; }
@@ -260,6 +260,7 @@ let sessionCorrect = 0;
 let examTimer = null;
 let timeRemaining = 1800; // 30 minutes in seconds
 let autoAdvanceTimer = null;
+let examStartTime = null;
 
 let userStats = { total: 0, correct: 0, bookmarks: [], weak: [], history: [] };
 
@@ -307,7 +308,10 @@ function updateDashboardUI() {
                     <span class="history-tag">${item.type}</span>
                     <span style="color:#64748b; margin-left:6px;">${item.date}</span>
                 </div>
-                <div><strong>${item.score}/${item.max}</strong> (${item.pct}%)</div>
+                <div>
+                    <strong>${item.score}/${item.max}</strong> (${item.pct}%)
+                    ${item.timeSpent ? `<span class="history-time">⏱️ ${item.timeSpent}</span>` : ''}
+                </div>
             </div>
         `).join('');
     }
@@ -368,6 +372,13 @@ function updateTimerDisplay() {
     document.getElementById('timer-display').innerText = formatted;
 }
 
+function formatElapsed(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m === 0) return `${s}s`;
+    return `${m}m ${s}s`;
+}
+
 function showDashboard() {
     stopTimer();
     clearAutoAdvance();
@@ -397,6 +408,8 @@ function startQuiz(count, isTimed = false) {
 
     currentIndex = 0;
     sessionCorrect = 0;
+    examStartTime = Date.now();
+
     document.getElementById('dashboard-view').classList.add('hidden');
     document.getElementById('quiz-view').classList.remove('hidden');
     document.getElementById('home-btn').classList.remove('hidden');
@@ -505,6 +518,11 @@ function nextQuestion() {
 function finishExam(isTimeout) {
     stopTimer();
     clearAutoAdvance();
+
+    // Calculate total time taken
+    const totalSecondsSpent = Math.round((Date.now() - examStartTime) / 1000);
+    const formattedTime = formatElapsed(totalSecondsSpent);
+
     const pct = Math.round((sessionCorrect / activePool.length) * 100);
     const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     
@@ -517,14 +535,15 @@ function finishExam(isTimeout) {
         type: typeStr,
         score: sessionCorrect,
         max: activePool.length,
-        pct: pct
+        pct: pct,
+        timeSpent: formattedTime
     });
     
     saveStats();
     
     const msg = isTimeout 
-        ? `Time Expired!\nFinal Score: ${sessionCorrect}/${activePool.length} (${pct}%)`
-        : `Quiz Complete!\nFinal Score: ${sessionCorrect}/${activePool.length} (${pct}%)`;
+        ? `Time Expired!\nFinal Score: ${sessionCorrect}/${activePool.length} (${pct}%)\nTotal Time: 30m 00s`
+        : `Quiz Complete!\nFinal Score: ${sessionCorrect}/${activePool.length} (${pct}%)\nTotal Time: ${formattedTime}`;
 
     alert(msg);
     showDashboard();
